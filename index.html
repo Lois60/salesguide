@@ -56,7 +56,7 @@ nav .cta{min-height:40px;padding:0 18px;font-size:.78rem}
 details{background:#fff;border-radius:16px;padding:18px 22px;margin-bottom:10px;border:1px solid var(--pe)}summary{cursor:pointer;font-weight:700;list-style:none;min-height:28px;display:flex;justify-content:space-between;gap:12px}summary:after{content:"+";color:var(--o);font-size:1.4rem;line-height:1}details[open] summary:after{content:"−"}details p{margin:12px 0 0;color:var(--ink)}
 footer{background:var(--ch);color:var(--cm);text-align:center;padding:30px 20px 100px;font-size:.85rem}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--ch);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;color:#fff;font:900 1.4rem Fraunces,serif;transform:translateY(110%);transition:transform .3s;border-top:2px solid var(--o)}.bar.on{transform:none}.bar .cta{min-height:48px;padding:0 20px;font-size:.8rem}
-.rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}.rv.in{opacity:1;transform:none}
+.rv{opacity:1}.rv.anim{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}.rv.anim.in{opacity:1;transform:none}
 @media(min-width:800px){body{font-size:18px}section{padding:120px 0}.hg{grid-template-columns:7fr 5fr}.gd{grid-template-columns:repeat(3,1fr)}.mc.wd{grid-column:span 2}.qs{grid-template-columns:repeat(3,1fr)}.list.c2{grid-template-columns:1fr 1fr}.st{grid-template-columns:repeat(5,1fr)}.two{display:grid;grid-template-columns:5fr 6fr;gap:60px;align-items:center}.rail{flex-wrap:wrap;overflow:visible;margin:0;padding:0}.rail>*{flex:1 1 30%}.rail .sh{flex:1 1 22%}.stp{grid-template-columns:repeat(6,1fr)}.stp li{padding:44px 0 0}.stp li:before{left:0;top:6px}.stp li:after{left:14px;right:-10px;top:12px;bottom:auto;width:auto;height:2px}.bar{display:none}footer{padding-bottom:30px}}
 @media(prefers-reduced-motion:reduce){.dev{animation:none}.rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
 </style></head><body>
@@ -173,10 +173,28 @@ footer{background:var(--ch);color:var(--cm);text-align:center;padding:30px 20px 
 <footer>© The Sales Conversion Guide by Lois Ugbe. Founder of Aviv Technologies.</footer>
 <div class="bar" id="bar"><span>₦20,000</span><a class="cta" href="https://selfany.com/thesalesconversionguide">GET THE GUIDE</a></div>
 <script>
-var BUY_URL="https://selfany.com/thesalesconversionguide";
-document.querySelectorAll("a.cta").forEach(function(a){a.href=BUY_URL});
-var bar=document.getElementById("bar"),hero=document.querySelector(".hero"),fin=document.querySelector("section:last-of-type");
-function chk(){var y=window.scrollY,h=hero.offsetHeight,f=fin.getBoundingClientRect().top;bar.classList.toggle("on",y>h&&f>innerHeight*.6)}
-addEventListener("scroll",chk,{passive:true});chk();
-try{var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{threshold:.12});document.querySelectorAll(".rv").forEach(function(e){io.observe(e)})}catch(e){document.querySelectorAll(".rv").forEach(function(e){e.classList.add("in")})}
+try{
+  var BUY_URL="https://selfany.com/thesalesconversionguide";
+  document.querySelectorAll("a.cta").forEach(function(a){a.href=BUY_URL});
+}catch(e){}
+try{
+  var bar=document.getElementById("bar"),hero=document.querySelector(".hero"),fin=document.querySelector("section:last-of-type");
+  function chk(){
+    if(!bar||!hero||!fin)return;
+    var y=window.scrollY,h=hero.offsetHeight,f=fin.getBoundingClientRect().top;
+    bar.classList.toggle("on",y>h&&f>innerHeight*.6);
+  }
+  addEventListener("scroll",chk,{passive:true});chk();
+}catch(e){}
+try{
+  document.querySelectorAll(".rv").forEach(function(e){e.classList.add("anim")});
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{threshold:.12});
+    document.querySelectorAll(".rv").forEach(function(e){io.observe(e)});
+  }else{
+    document.querySelectorAll(".rv").forEach(function(e){e.classList.add("in")});
+  }
+}catch(e){
+  document.querySelectorAll(".rv").forEach(function(e){e.classList.add("in")});
+}
 </script></body></html>
