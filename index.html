@@ -68,12 +68,15 @@ n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
 document,'script','https://connect.facebook.net/en_US/fbevents.js');
-window.PIXEL_ID="REPLACE_WITH_YOUR_PIXEL_ID";
-if(window.PIXEL_ID && window.PIXEL_ID.indexOf("REPLACE")!==0){fbq('init', window.PIXEL_ID);fbq('track','PageView');}
+window.PIXEL_ID="2586579081856032";
+if(window.PIXEL_ID && window.PIXEL_ID.indexOf("REPLACE")!==0){fbq('init', window.PIXEL_ID);}
+// Note: PageView is fired further down, once we know whether this is the normal
+// landing view or the thank-you view, so it only ever fires once per page load.
 </script>
 <noscript><img height="1" width="1" style="display:none" alt=""
-src="https://www.facebook.com/tr?id=REPLACE_WITH_YOUR_PIXEL_ID&ev=PageView&noscript=1"/></noscript>
+src="https://www.facebook.com/tr?id=2586579081856032&ev=PageView&noscript=1"/></noscript>
 </head><body>
+<div id="landing">
 <nav><div class="w"><span>THE SALES CONVERSION GUIDE</span><a class="cta" href="#">GET IT</a></div></nav>
 
 <header class="hero"><div class="w"><div class="n rv">
@@ -258,29 +261,110 @@ src="https://www.facebook.com/tr?id=REPLACE_WITH_YOUR_PIXEL_ID&ev=PageView&noscr
 
 <footer>© The Sales Conversion Guide by Lois Ugbe. Founder of Aviv Technologies.</footer>
 <div class="bar" id="bar"><span>₦25,000</span><a class="cta" href="#">GET THE GUIDE</a></div>
+</div><!-- /#landing -->
+
+<div id="thankyou" style="display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at 50% 20%,rgba(249,115,22,.5),transparent 60%),var(--ch);color:#fff;text-align:center;padding:40px 20px">
+  <div style="width:64px;height:64px;border-radius:50%;background:var(--o);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:1.8rem">✓</div>
+  <h1>You're <span class="g">in.</span></h1>
+  <p style="max-width:460px;margin:0 auto 10px;color:var(--pe)">Thank you for getting The Sales Conversion Guide. Check your email for access instructions.</p>
+  <p style="max-width:460px;margin:0 auto 10px;color:var(--pe)">Learn to sell without sounding desperate — starting now.</p>
+  <a class="cta" href="https://selfany.com/thesalesconversionguide" style="margin-top:28px">Back to the guide</a>
+</div>
 
 <script>
+function getCookie(name){
+  var m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
+  return m ? m.pop() : null;
+}
+
+// Does this visit have the "thankyou" marker selfany should redirect back with
+// after a successful payment? e.g. https://yourdomain.com/?thankyou=1
+var isThankYou = false;
 try{
-  var BUY_URL="https://selfany.com/thesalesconversionguide";
-  document.querySelectorAll("a.cta").forEach(function(a){
-    a.href=BUY_URL;
-    a.addEventListener("click", function(){
-      try{
-        var eventID = "lead_"+Date.now()+"_"+Math.random().toString(36).slice(2);
-        if(typeof fbq==="function"){ fbq('track','Lead',{},{eventID:eventID}); }
-        fetch("/api/capi",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({
-            event_name:"Lead",
-            event_id:eventID,
-            event_source_url: location.href
-          })
-        }).catch(function(){});
-      }catch(e){}
-    });
-  });
+  isThankYou = new URLSearchParams(location.search).get("thankyou") === "1";
 }catch(e){}
+
+var CONVERSION_VALUE = 25000;   // update if the price changes
+var CONVERSION_CURRENCY = "NGN";
+
+if(isThankYou){
+  try{
+    var landingEl = document.getElementById("landing");
+    var thankyouEl = document.getElementById("thankyou");
+    if(landingEl) landingEl.style.display = "none";
+    if(thankyouEl){
+      thankyouEl.style.display = "flex";
+      document.body.style.overflowX = "hidden";
+    }
+  }catch(e){}
+}
+
+// _fbc/_fbp are first-party cookies the Pixel sets on this domain. Since both the
+// landing view and the thank-you view live on this same domain/file, these are
+// readable on the thank-you view even after the round trip through selfany to pay.
+var fbc = getCookie("_fbc");
+var fbp = getCookie("_fbp");
+
+function sendCAPI(eventName, eventID, value, currency){
+  fetch("/api/capi",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      event_name: eventName,
+      event_id: eventID,
+      event_source_url: location.href,
+      value: value,
+      currency: currency,
+      fbc: fbc,
+      fbp: fbp
+    })
+  }).catch(function(){});
+}
+
+// Plain PageView fires on every load (landing and thank-you alike). This also means
+// a URL-based Custom Conversion (rule: URL contains "thankyou=1", event: PageView) is
+// still available as a backup/secondary conversion if you ever want one.
+try{
+  var pvEventID = "pv_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+  if(typeof fbq==="function"){ fbq('track','PageView',{},{eventID:pvEventID}); }
+  sendCAPI("PageView", pvEventID, undefined, undefined);
+}catch(e){}
+
+// Real Purchase event, only on the thank-you view, with the actual value attached.
+// This is the one to use for Meta's Sales objective / ROAS reporting.
+if(isThankYou){
+  try{
+    var purchEventID = "purchase_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+    if(typeof fbq==="function"){
+      fbq('track','Purchase',{value:CONVERSION_VALUE,currency:CONVERSION_CURRENCY},{eventID:purchEventID});
+    }
+    sendCAPI("Purchase", purchEventID, CONVERSION_VALUE, CONVERSION_CURRENCY);
+  }catch(e){}
+}
+
+if(!isThankYou){
+  try{
+    var BUY_URL="https://selfany.com/thesalesconversionguide";
+    document.querySelectorAll("a.cta").forEach(function(a){
+      a.href=BUY_URL;
+      a.addEventListener("click", function(){
+        try{
+          var eventID = "lead_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+          if(typeof fbq==="function"){ fbq('track','Lead',{},{eventID:eventID}); }
+          fetch("/api/capi",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({
+              event_name:"Lead",
+              event_id:eventID,
+              event_source_url: location.href
+            })
+          }).catch(function(){});
+        }catch(e){}
+      });
+    });
+  }catch(e){}
+}
 try{
   var bar=document.getElementById("bar"),hero=document.querySelector(".hero"),fin=document.querySelector("section:last-of-type");
   function chk(){
