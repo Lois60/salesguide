@@ -15,7 +15,7 @@ html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--cr);color:var(--bd);
 font:400 17px/1.68 "Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
 -webkit-font-smoothing:antialiased;overflow-x:hidden}
-img{max-width:100%;display:block}
+img{max-width:100%;height:auto;display:block}
 
 /* ===== layout ===== */
 .w{width:100%;max-width:1140px;margin:0 auto;padding:0 20px}
@@ -52,6 +52,8 @@ font:800 .7rem/1 "Plus Jakarta Sans",sans-serif;letter-spacing:.2em;text-transfo
 .eb:before{content:"";width:24px;height:3px;border-radius:3px;background:var(--o);flex:0 0 24px}
 .dk .eb{color:var(--ob)}
 .eb.c{justify-content:center}
+.hero .eb{color:var(--ob)}
+.hero .eb:before{background:var(--o)}
 
 /* ===== buttons ===== */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;
@@ -262,22 +264,19 @@ background:var(--oL);font:700 .74rem/1.3 "Plus Jakarta Sans",sans-serif;letter-s
 .dk .sys{background:rgba(249,115,22,.2);color:var(--pe)}
 </style>
 
-<!-- Meta Pixel Code -->
 <script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2586579081856032');
-// PageView fires in the body script, once per load, with an eventID shared with CAPI.
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+window.PIXEL_ID="2586579081856032";
+if(window.PIXEL_ID && window.PIXEL_ID.indexOf("REPLACE")!==0){fbq('init', window.PIXEL_ID);}
+// Note: PageView is fired further down, once we know whether this is the normal
+// landing view or the thank-you view, so it only ever fires once per page load.
 </script>
 <noscript><img height="1" width="1" style="display:none" alt=""
 src="https://www.facebook.com/tr?id=2586579081856032&ev=PageView&noscript=1"/></noscript>
-<!-- End Meta Pixel Code -->
 
 <script>
 (function(){try{
@@ -607,133 +606,139 @@ src="https://www.facebook.com/tr?id=2586579081856032&ev=PageView&noscript=1"/></
 </div>
 
 <script>
-/* ---------- Meta Pixel + CAPI ---------- */
-var BUY_URL="https://selfany.com/thesalesconversionguide";
-var CONVERSION_VALUE = 20000;      // keep in step with the price on the page and in selfany
-var CONVERSION_CURRENCY = "NGN";
-
 function getCookie(name){
   var m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
   return m ? m.pop() : null;
 }
 
-/* Thank-you view: selfany redirects back to  https://yourdomain/?thankyou=1  after payment. */
+// Does this visit have the "thankyou" marker selfany should redirect back with
+// after a successful payment? e.g. https://yourdomain.com/?thankyou=1
 var isThankYou = false;
-try{ isThankYou = new URLSearchParams(location.search).get("thankyou") === "1"; }catch(e){}
-if(isThankYou){
-  try{
-    var _l=document.getElementById("landing"), _t=document.getElementById("thankyou");
-    if(_l) _l.style.display="none";
-    if(_t){ _t.style.display="flex"; document.body.style.overflowX="hidden"; }
-  }catch(e){}
-}
-
-function sendCAPI(eventName, eventID, value, currency){
-  try{
-    fetch("/api/capi",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        event_name: eventName,
-        event_id: eventID,
-        event_source_url: location.href,
-        value: value,
-        currency: currency,
-        fbc: getCookie("_fbc"),
-        fbp: getCookie("_fbp")
-      }),
-      keepalive: true
-    }).catch(function(){});
-  }catch(e){}
-}
-
-/* PageView: every load, landing and thank-you alike. */
 try{
-  var _pv = "pv_"+Date.now()+"_"+Math.random().toString(36).slice(2);
-  if(typeof fbq==="function"){ fbq('track','PageView',{},{eventID:_pv}); }
-  sendCAPI("PageView", _pv, undefined, undefined);
+  isThankYou = new URLSearchParams(location.search).get("thankyou") === "1";
 }catch(e){}
 
-/* Purchase: only on the thank-you view, with the real value. */
+var CONVERSION_VALUE = 20000;   // update if the price changes
+var CONVERSION_CURRENCY = "NGN";
+
 if(isThankYou){
   try{
-    var _pu = "purchase_"+Date.now()+"_"+Math.random().toString(36).slice(2);
-    if(typeof fbq==="function"){
-      fbq('track','Purchase',{value:CONVERSION_VALUE,currency:CONVERSION_CURRENCY},{eventID:_pu});
+    var landingEl = document.getElementById("landing");
+    var thankyouEl = document.getElementById("thankyou");
+    if(landingEl) landingEl.style.display = "none";
+    if(thankyouEl){
+      thankyouEl.style.display = "flex";
+      document.body.style.overflowX = "hidden";
     }
-    sendCAPI("Purchase", _pu, CONVERSION_VALUE, CONVERSION_CURRENCY);
   }catch(e){}
 }
 
-/* InitiateCheckout: on every buy-button click. */
+// _fbc/_fbp are first-party cookies the Pixel sets on this domain. Since both the
+// landing view and the thank-you view live on this same domain/file, these are
+// readable on the thank-you view even after the round trip through selfany to pay.
+var fbc = getCookie("_fbc");
+var fbp = getCookie("_fbp");
+
+function sendCAPI(eventName, eventID, value, currency){
+  fetch("/api/capi",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      event_name: eventName,
+      event_id: eventID,
+      event_source_url: location.href,
+      value: value,
+      currency: currency,
+      fbc: getCookie("_fbc") || fbc,
+      fbp: getCookie("_fbp") || fbp
+    }),
+    keepalive: true
+  }).catch(function(){});
+}
+
+// Plain PageView fires on every load (landing and thank-you alike). This also means
+// a URL-based Custom Conversion (rule: URL contains "thankyou=1", event: PageView) is
+// still available as a backup/secondary conversion if you ever want one.
+try{
+  var pvEventID = "pv_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+  if(typeof fbq==="function"){ fbq('track','PageView',{},{eventID:pvEventID}); }
+  sendCAPI("PageView", pvEventID, undefined, undefined);
+}catch(e){}
+
+// Real Purchase event, only on the thank-you view, with the actual value attached.
+// This is the one to use for Meta's Sales objective / ROAS reporting.
+if(isThankYou){
+  try{
+    var purchEventID = "purchase_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+    if(typeof fbq==="function"){
+      fbq('track','Purchase',{value:CONVERSION_VALUE,currency:CONVERSION_CURRENCY},{eventID:purchEventID});
+    }
+    sendCAPI("Purchase", purchEventID, CONVERSION_VALUE, CONVERSION_CURRENCY);
+  }catch(e){}
+}
+
 if(!isThankYou){
   try{
+    var BUY_URL="https://selfany.com/thesalesconversionguide";
     document.querySelectorAll("a.cta").forEach(function(a){
-      a.href = BUY_URL;
+      a.href=BUY_URL;
       a.addEventListener("click", function(){
         try{
-          var id = "ic_"+Date.now()+"_"+Math.random().toString(36).slice(2);
-          if(typeof fbq==="function"){
-            fbq('track','InitiateCheckout',{value:CONVERSION_VALUE,currency:CONVERSION_CURRENCY},{eventID:id});
-          }
-          sendCAPI("InitiateCheckout", id, CONVERSION_VALUE, CONVERSION_CURRENCY);
+          var eventID = "ic_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+          if(typeof fbq==="function"){ fbq('track','InitiateCheckout',{value:CONVERSION_VALUE,currency:CONVERSION_CURRENCY},{eventID:eventID}); }
+          sendCAPI("InitiateCheckout", eventID, CONVERSION_VALUE, CONVERSION_CURRENCY);
         }catch(e){}
       });
     });
   }catch(e){}
 }
-</script>
-
-<script>
-/* ---------- tap for sound ---------- */
 try{
-  var sb=document.getElementById("soundBtn"), vf=document.getElementById("heroVideo");
-  if(sb&&vf){
-    sb.addEventListener("click",function(){
-      try{
-        vf.contentWindow.postMessage(JSON.stringify({event:"command",func:"unMute",args:[]}),"*");
-        vf.contentWindow.postMessage(JSON.stringify({event:"command",func:"playVideo",args:[]}),"*");
-      }catch(e){}
-      sb.style.display="none";
-    });
-  }
-}catch(e){}
-
-/* ---------- sticky bottom bar ---------- */
-try{
-  var bar=document.getElementById("bar"), hero=document.querySelector(".hero");
+  var bar=document.getElementById("bar"),hero=document.querySelector(".hero"),fin=document.querySelector("section:last-of-type");
   function chk(){
-    try{
-      var last=document.querySelector("footer");
-      var f=last?last.getBoundingClientRect().top:9e9;
-      bar.classList.toggle("on", window.scrollY>hero.offsetHeight && f>innerHeight*0.7);
-    }catch(e){}
+    if(!bar||!hero||!fin)return;
+    var y=window.scrollY,h=hero.offsetHeight,f=fin.getBoundingClientRect().top;
+    bar.classList.toggle("on",y>h&&f>innerHeight*.6);
   }
-  addEventListener("scroll",chk,{passive:true}); chk();
+  addEventListener("scroll",chk,{passive:true});chk();
 }catch(e){}
-
-/* ---------- scroll reveal ---------- */
 try{
   document.querySelectorAll(".rv").forEach(function(e){e.classList.add("anim")});
   if("IntersectionObserver" in window){
-    var io=new IntersectionObserver(function(es){
-      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
-    },{threshold:.1});
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{threshold:.12});
     document.querySelectorAll(".rv").forEach(function(e){io.observe(e)});
-  } else {
+  }else{
     document.querySelectorAll(".rv").forEach(function(e){e.classList.add("in")});
   }
-}catch(e){ document.querySelectorAll(".rv").forEach(function(e){e.classList.add("in")}); }
+}catch(e){
+  document.querySelectorAll(".rv").forEach(function(e){e.classList.add("in")});
+}
+</script>
 
-/* ---------- content lock: reveal after 60s of video playback, or 60s from load ---------- */
+<script>
 try{
-  if(!isThankYou){
+  var vf=document.getElementById("heroVideo"), vb=document.getElementById("soundBtn");
+  if(vf && vb){
+    vb.addEventListener("click",function(){
+      try{
+        function cmd(f,a){vf.contentWindow.postMessage(JSON.stringify({event:"command",func:f,args:a||[]}),"*");}
+        cmd("unMute");cmd("setVolume",[100]);cmd("playVideo");
+      }catch(e){}
+      vb.style.display="none";
+    });
+  }
+}catch(e){}
+</script>
+
+<script>
+try{
+  if(typeof isThankYou==="undefined" || !isThankYou){
     var rootEl=document.documentElement, unlocked=false, watched=0, playing=false, everPlayed=false;
     function unlock(){
       if(unlocked)return; unlocked=true;
       rootEl.classList.remove("js-lock");
-      try{ window.dispatchEvent(new Event("scroll")); }catch(e){}
+      try{window.dispatchEvent(new Event("scroll"));}catch(e){}
     }
+    // Fallback: if the video never starts playing (autoplay blocked, embed failed), reveal 60s after page load.
     setTimeout(function(){ if(!everPlayed) unlock(); },60000);
     var vf2=document.getElementById("heroVideo");
     if(vf2){
@@ -756,9 +761,10 @@ try{
           if(st!==null){ playing=(st===1); if(playing) everPlayed=true; }
         }catch(e){}
       });
+      // Count real playback time; reveal after 60 seconds of the video having played.
       setInterval(function(){ if(playing){ watched++; if(watched>=60) unlock(); } },1000);
     }
   }
-}catch(e){ try{document.documentElement.classList.remove("js-lock");}catch(e2){} }
+}catch(e){}
 </script>
 </body></html>
